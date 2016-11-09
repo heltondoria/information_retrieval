@@ -52,7 +52,8 @@ class SearchEngine:
             word = self.stemmer.stem(word)
 
         documents = set()
-        for uid in self.index_engine.inverted_index.get(word):
-            documents.add((self.index_engine.documents.get(uid)).name)
+        documents_keys = self.index_engine.inverted_index.get(word)
+        for key in documents_keys:
+            documents.add(self.index_engine.index.get(key))
 
         return documents

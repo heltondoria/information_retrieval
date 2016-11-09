@@ -33,7 +33,7 @@ def main():
 
     # add more documents without reset the index
     demo.indexer.add_documents('./extra_files/')
-    print("{" + "\n".join("{}: {}".format(k, v) for k, v in demo.indexer.inverted_index.items()) + "}")
+    print("\n{" + "\n".join("{}: {}".format(k, v) for k, v in demo.indexer.index.items()) + "}")
 
     # the search for the word 'blue' should point to 3 documents, based on the load documents in the index
     search_word = "exquisite"
@@ -44,7 +44,8 @@ def main():
     demo.indexer.reset()
     demo.indexer.lemmatizer = None
     demo.indexer.add_documents()
-    print("{" + "\n".join("{}: {}".format(k, v) for k, v in demo.indexer.inverted_index.items()) + "}")
+    print("\n{" + "\n".join("{}: {}".format(k, v) for k, v in demo.indexer.index.items()) + "}")
+    print("\n\n{" + "\n".join("{}: {}".format(k, v) for k, v in demo.indexer.inverted_index.items()) + "}")
 
     # the search for the word 'blue' should point to 3 documents, based on the load documents in the index
     search_word = "blue"

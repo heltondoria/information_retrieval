@@ -9,6 +9,7 @@ import errno
 import json
 import os
 import pickle
+from io import TextIOWrapper
 
 
 def mkdir(path):
@@ -34,9 +35,10 @@ def safe_open(path, qualifier):
 
 
 class IndexPersister:
-    def __init__(self, index, path='./index/'):
+    def __init__(self, index, inverted_index, path='./index/'):
 
         self.index = index
+        self.inverted_index = inverted_index
         self.path = path
 
     def write_binary_index(self):
@@ -45,17 +47,37 @@ class IndexPersister:
         """
         try:
             with safe_open(self.path + 'index.pkl', 'wb') as f:
-                return pickle.dump(self.index, f, pickle.HIGHEST_PROTOCOL)
+                pickle.dump(self.index, f, pickle.HIGHEST_PROTOCOL)
+            with safe_open(self.path + 'inverted_index.pkl', 'wb') as f:
+                pickle.dump(self.inverted_index, f, pickle.HIGHEST_PROTOCOL)
         except:
             raise
 
-    def load_binary_index(self):
+    def __load_binary_index(self, file_name):
         """
-        If exists, load the binary version of the inverted index to continue from the last load.
+        If exists, load the binary version of the chosen index to continue from the last load.
         """
+        try:
+            with safe_open(self.path + file_name + '.pkl', 'rb') as f:
+                return pickle.load(f)
+        except OSError as exc:
+            if exc.errno == errno.EEXIST:
+                pass
+
+    def load_inverted_index(self):
+        try:
+            with safe_open(self.path + 'inverted_index.pkl', 'rb') as f:
+                return pickle.load(f)
+        except OSError as exc:
+            if exc.errno == errno.EEXIST:
+                pass
+
+    def load_index(self):
         try:
             with safe_open(self.path + 'index.pkl', 'rb') as f:
                 return pickle.load(f)
+        except EOFError:
+            pass
         except OSError as exc:
             if exc.errno == errno.EEXIST:
                 pass
@@ -72,3 +94,5 @@ class IndexPersister:
 
         with safe_open(self.path + 'index.json', 'w') as f:
             json.dump(self.index, f, default=set_default)
+        with safe_open(self.path + 'inverted_index.json', 'w') as f:
+            json.dump(self.inverted_index, f, default=set_default)

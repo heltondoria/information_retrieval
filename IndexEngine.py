@@ -44,12 +44,12 @@ class IndexEngine:
         """
         self.default_path = path
         self.language = language
-        self.documents = {}
+        self.index = collections.defaultdict(set)
         self.inverted_index = collections.defaultdict(set)
         self.stemmer = stemmer
         self.lemmatizer = lemmatizer
         self.default_write_path = write_path
-        self.persister = IndexPersister(self.inverted_index, self.default_write_path)
+        self.persister = IndexPersister(self.index, self.inverted_index, self.default_write_path)
 
         if tokenizer:
             self.tokenizer = tokenizer
@@ -67,9 +67,17 @@ class IndexEngine:
 
         :param from_path: path to load documents from
         """
+        if len(self.index) == 0:
+            if self.persister.load_index():
+                self.index = self.persister.load_index()
+
+        documents = collections.defaultdict(set)
         for file_name in sorted(os.listdir(from_path)):
             file = open(from_path + file_name)
-            self.documents[str(uuid.uuid5(uuid.NAMESPACE_DNS, file_name))] = file
+            id = str(uuid.uuid5(uuid.NAMESPACE_DNS, file_name))
+            self.index[id] = file.name
+            documents[id] = file
+        return documents
 
     def add_documents(self, path=None):
         """
@@ -83,16 +91,16 @@ class IndexEngine:
             path = self.default_path
 
         if len(self.inverted_index) == 0:
-            if self.persister.load_binary_index():
-                self.inverted_index = self.persister.load_binary_index()
-        self.load_documents(path)
-        self.normalize()
+            if self.persister.load_inverted_index():
+                self.inverted_index = self.persister.load_inverted_index()
+
+        self.normalize(self.load_documents(path))
 
         self.persister.write_json_index()
         self.persister.write_binary_index()
 
-    def normalize(self):
-        for k, v in self.documents.items():
+    def normalize(self, documents):
+        for k, v in documents.items():
             for token in [term.lower() for term in self.tokenizer.tokenize(v.read())]:
                 if token in self.stopwords:
                     continue
@@ -110,5 +118,5 @@ class IndexEngine:
                         self.inverted_index[token].add(k)
 
     def reset(self):
-        self.documents = {}
+        self.index = collections.defaultdict(set)
         self.inverted_index = collections.defaultdict(set)
