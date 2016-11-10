@@ -14,10 +14,12 @@ import os
 import uuid
 
 from nltk import corpus
-from nltk import tokenize
+from nltk import RegexpTokenizer
+from nltk.probability import FreqDist
 from nltk.stem.snowball import SnowballStemmer
 
 from IndexPersister import IndexPersister
+from InvertedIndex import FrequencyInFile
 
 
 class IndexEngine:
@@ -31,30 +33,28 @@ class IndexEngine:
         Creates a new instance of the IndexEngine.
 
         :param path: path to documents. If not given, local resources folder will be used as default.
-        :param tokenizer: tokenizer function. If one is not provided, the NLTK SpaceTokenizer will be used as default.
+        :param tokenizer: tokenizer function. If one is not provided, the NLTK RegexpTokenizer will be used as default.
         :param stemmer: stemmer to be used. If one is not provided, the NLTK SnowballStemmer will be used as default.
-        A stemmer and a Lematizer can not be defined até the same fi.Beecausae  wlw?
-        :param lemmatizer: lemmatizer to be used. If one is not provided, none will be used.
         :param language: language from where the stopwords will be chosen. If not given, english will be choose as
         default.
-        :param stopwords: list of words to be ignored. If one is not provided, nltk.corpus.stopwords will be used as
+        :param stopwords: set of words to be ignored. If one is not provided, nltk.corpus.stopwords will be used as
         default.
         :param write_path: path to write a copy of the index.
 
         """
         self.default_path = path
         self.language = language
-        self.index = collections.defaultdict(set)
-        self.inverted_index = collections.defaultdict(set)
+        self.inverted_index = collections.defaultdict(list)
+        self.forward_index = collections.defaultdict(set)
         self.stemmer = stemmer
-        self.lemmatizer = lemmatizer
         self.default_write_path = write_path
-        self.persister = IndexPersister(self.index, self.inverted_index, self.default_write_path)
+        self.persister = IndexPersister(index=self.forward_index, inverted_index=self.inverted_index,
+                                        path=self.default_write_path)
 
         if tokenizer:
             self.tokenizer = tokenizer
         else:
-            self.tokenizer = tokenize.simple.SpaceTokenizer()
+            self.tokenizer = RegexpTokenizer(r'\w+')
 
         if stopwords:
             self.stopwords = set(stopwords)
@@ -67,19 +67,19 @@ class IndexEngine:
 
         :param from_path: path to load documents from
         """
-        if len(self.index) == 0:
+        if len(self.forward_index) == 0:
             if self.persister.load_index():
-                self.index = self.persister.load_index()
+                self.forward_index = self.persister.load_index()
 
         documents = collections.defaultdict(set)
         for file_name in sorted(os.listdir(from_path)):
             file = open(from_path + file_name)
-            id = str(uuid.uuid5(uuid.NAMESPACE_DNS, file_name))
-            self.index[id] = file.name
-            documents[id] = file
+            uid = str(uuid.uuid5(uuid.NAMESPACE_DNS, file_name))
+            self.forward_index[uid] = file.name
+            documents[uid] = file
         return documents
 
-    def add_documents(self, path=None):
+    def create_index(self, path=None):
         """
         Add documents to the index
 
@@ -90,33 +90,43 @@ class IndexEngine:
         if not path:
             path = self.default_path
 
-        if len(self.inverted_index) == 0:
-            if self.persister.load_inverted_index():
-                self.inverted_index = self.persister.load_inverted_index()
+        # if len(self.inverted_index) == 0:
+        #     if self.persister.load_inverted_index():
+        #         self.inverted_index = self.persister.load_inverted_index()
 
-        self.normalize(self.load_documents(path))
+        self.add_documents(self.load_documents(path))
 
-        self.persister.write_json_index()
-        self.persister.write_binary_index()
+        self.persister.csv_inverted_index_writer(self.inverted_index)
+        self.persister.csv_forward_index_writer(self.forward_index)
+        # self.persister.write_binary_index()
 
-    def normalize(self, documents):
+    def normalize(self, token):
+        if not self.stemmer:
+            self.stemmer = SnowballStemmer(self.language)
+        return self.stemmer.stem(token)
+
+    def calc_freq_dist(self, document):
+        return FreqDist(document.read())
+
+    def add_documents(self, documents):
+        freq_dist = FreqDist()
         for k, v in documents.items():
-            for token in [term.lower() for term in self.tokenizer.tokenize(v.read())]:
+            content = v.read()
+            freq_dist.update(self.tokenizer.tokenize(content))
+            for token in [term.lower() for term in self.tokenizer.tokenize(content)]:
                 if token in self.stopwords:
                     continue
 
-                if not self.stemmer and not self.lemmatizer:
-                    self.stemmer = SnowballStemmer(self.language)
+                stem = self.normalize(token)
 
-                if self.lemmatizer:
-                    token = self.lemmatizer.lemmatize(token)
-                elif self.stemmer:
-                    token = self.stemmer.stem(token)
-
-                if token:
-                    if k not in self.inverted_index[token]:
-                        self.inverted_index[token].add(k)
+                if 0 == len(self.inverted_index) or not self.inverted_index[stem]:
+                    self.inverted_index[stem].append(FrequencyInFile(freq_dist.get(token), k))
+                else:
+                    for item in self.inverted_index[stem]:
+                        if k == item.file_id:
+                            continue
+                        self.inverted_index[stem].append(FrequencyInFile(freq_dist.get(token), k))
 
     def reset(self):
-        self.index = collections.defaultdict(set)
-        self.inverted_index = collections.defaultdict(set)
+        self.forward_index = collections.defaultdict(set)
+        self.inverted_index = collections.defaultdict(list)

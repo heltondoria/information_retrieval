@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2016-2016 
@@ -6,10 +5,9 @@
 # URL: <http://github.com/heltondoria/information_retrival>
 # For license information, see LICENSE.TXT
 import errno
-import json
 import os
 import pickle
-from io import TextIOWrapper
+import csv
 
 
 def mkdir(path):
@@ -65,6 +63,10 @@ class IndexPersister:
                 pass
 
     def load_inverted_index(self):
+        """
+        Serialize the inverted index
+        :return: A deserialized version of the index
+        """
         try:
             with safe_open(self.path + 'inverted_index.pkl', 'rb') as f:
                 return pickle.load(f)
@@ -73,6 +75,10 @@ class IndexPersister:
                 pass
 
     def load_index(self):
+        """
+        Deserialize the forward index
+        :return: A deserialized version of the index
+        """
         try:
             with safe_open(self.path + 'index.pkl', 'rb') as f:
                 return pickle.load(f)
@@ -82,17 +88,22 @@ class IndexPersister:
             if exc.errno == errno.EEXIST:
                 pass
 
-    def write_json_index(self):
+    def csv_inverted_index_writer(self, data):
         """
-        Write the inverted index as a JSON file to be human readable.
+        Write the a inverted index in csv format
         """
+        with safe_open(self.path + 'inverted_index.csv', 'w') as f:
+            csv_obj = csv.writer(f)
+            for key in data.keys():
+                for item in data[key]:
+                    csv_obj.writerow([key + ";" + str(item.freq) + ";" + item.file_id])
 
-        def set_default(obj):
-            if isinstance(obj, set):
-                return list(obj)
-            raise TypeError
+    def csv_forward_index_writer(self, data):
+        """
+        Write the a forward index in csv format
+        """
+        with safe_open(self.path + 'index.csv', 'w') as f:
+            csv_obj = csv.writer(f)
+            for key in data.keys():
+                csv_obj.writerow([key + ";" + data[key]])
 
-        with safe_open(self.path + 'index.json', 'w') as f:
-            json.dump(self.index, f, default=set_default)
-        with safe_open(self.path + 'inverted_index.json', 'w') as f:
-            json.dump(self.inverted_index, f, default=set_default)
