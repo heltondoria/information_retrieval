@@ -4,13 +4,20 @@
 # Author: Helton Costa <helton.doria@gmail.com>
 # URL: <http://github.com/heltondoria/information_retrival>
 # For license information, see LICENSE.TXT
+"""
+Module with persistence classes
+"""
+import csv
 import errno
 import os
 import pickle
-import csv
 
 
 def mkdir(path):
+    """
+    Função estática responsável por criar pastas de maneira segura.
+    :param path: Caminho a ser criado.
+    """
     try:
         os.makedirs(path)
     except OSError as exc:
@@ -32,7 +39,11 @@ def safe_open(path, qualifier):
     return open(path, qualifier)
 
 
-class IndexPersister:
+class IndexPersister(object):
+    """
+    Classe responsável por salvar e carregar os índices.
+    """
+
     def __init__(self, index, inverted_index, path='./index/'):
 
         self.index = index
@@ -44,10 +55,10 @@ class IndexPersister:
         Writes a binary version of the inverted index to reload later.
         """
         try:
-            with safe_open(self.path + 'index.pkl', 'wb') as f:
-                pickle.dump(self.index, f, pickle.HIGHEST_PROTOCOL)
-            with safe_open(self.path + 'inverted_index.pkl', 'wb') as f:
-                pickle.dump(self.inverted_index, f, pickle.HIGHEST_PROTOCOL)
+            with safe_open(self.path + 'index.pkl', 'wb') as file:
+                pickle.dump(self.index, file, pickle.HIGHEST_PROTOCOL)
+            with safe_open(self.path + 'inverted_index.pkl', 'wb') as file2:
+                pickle.dump(self.inverted_index, file2, pickle.HIGHEST_PROTOCOL)
         except:
             raise
 
@@ -68,8 +79,8 @@ class IndexPersister:
         :return: A deserialized version of the index
         """
         try:
-            with safe_open(self.path + 'inverted_index.pkl', 'rb') as f:
-                return pickle.load(f)
+            with safe_open(self.path + 'inverted_index.pkl', 'rb') as file:
+                return pickle.load(file)
         except OSError as exc:
             if exc.errno == errno.EEXIST:
                 pass
@@ -80,8 +91,8 @@ class IndexPersister:
         :return: A deserialized version of the index
         """
         try:
-            with safe_open(self.path + 'index.pkl', 'rb') as f:
-                return pickle.load(f)
+            with safe_open(self.path + 'index.pkl', 'rb') as file:
+                return pickle.load(file)
         except EOFError:
             pass
         except OSError as exc:
@@ -92,8 +103,8 @@ class IndexPersister:
         """
         Write the a inverted index in csv format
         """
-        with safe_open(self.path + 'inverted_index.csv', 'w') as f:
-            csv_obj = csv.writer(f)
+        with safe_open(self.path + 'inverted_index.csv', 'w') as file:
+            csv_obj = csv.writer(file)
             for key in data.keys():
                 for item in data[key]:
                     csv_obj.writerow([key + ";" + str(item.freq) + ";" + item.file_id])
@@ -102,8 +113,7 @@ class IndexPersister:
         """
         Write the a forward index in csv format
         """
-        with safe_open(self.path + 'index.csv', 'w') as f:
-            csv_obj = csv.writer(f)
+        with safe_open(self.path + 'index.csv', 'w') as file:
+            csv_obj = csv.writer(file)
             for key in data.keys():
                 csv_obj.writerow([key + ";" + data[key]])
-

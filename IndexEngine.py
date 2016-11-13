@@ -13,32 +13,34 @@ import collections
 import os
 import uuid
 
-from nltk import corpus
-from nltk import RegexpTokenizer
+from nltk import RegexpTokenizer, corpus
 from nltk.probability import FreqDist
 from nltk.stem.snowball import SnowballStemmer
 
 from IndexPersister import IndexPersister
-from InvertedIndex import FrequencyInFile
 
 
-class IndexEngine:
+class IndexEngine(object):
     """
-    An Index Engine that creates a document index and a inverted index based on files in a given path
+    An Index Engine that creates a document index and a inverted index based on files in a given
+    path
     """
 
-    def __init__(self, tokenizer=None, stemmer=None, lemmatizer=None, stopwords=None, language='english',
-                 path='./resources/', write_path='./index/'):
+    def __init__(self, tokenizer=None, stemmer=None, stopwords=None,
+                 language='english', path='./resources/', write_path='./index/'):
         """
         Creates a new instance of the IndexEngine.
 
-        :param path: path to documents. If not given, local resources folder will be used as default.
-        :param tokenizer: tokenizer function. If one is not provided, the NLTK RegexpTokenizer will be used as default.
-        :param stemmer: stemmer to be used. If one is not provided, the NLTK SnowballStemmer will be used as default.
-        :param language: language from where the stopwords will be chosen. If not given, english will be choose as
+        :param path: path to documents. If not given, local resources folder will be used as
         default.
-        :param stopwords: set of words to be ignored. If one is not provided, nltk.corpus.stopwords will be used as
-        default.
+        :param tokenizer: tokenizer function. If one is not provided, the NLTK RegexpTokenizer will
+         be used as default.
+        :param stemmer: stemmer to be used. If one is not provided, the NLTK SnowballStemmer will
+        be used as default.
+        :param language: language from where the stopwords will be chosen. If not given, english
+        will be choose as default.
+        :param stopwords: set of words to be ignored. If one is not provided,
+        nltk.corpus.stopwords will be used as default.
         :param write_path: path to write a copy of the index.
 
         """
@@ -48,7 +50,8 @@ class IndexEngine:
         self.forward_index = collections.defaultdict(set)
         self.stemmer = stemmer
         self.default_write_path = write_path
-        self.persister = IndexPersister(index=self.forward_index, inverted_index=self.inverted_index,
+        self.persister = IndexPersister(index=self.forward_index,
+                                        inverted_index=self.inverted_index,
                                         path=self.default_write_path)
 
         if tokenizer:
@@ -83,50 +86,67 @@ class IndexEngine:
         """
         Add documents to the index
 
-        :param path: Path that contains the documents to be indexed. If not given, local resources folder will be used
-        as default.
+        :param path: Path that contains the documents to be indexed. If not given, local resources
+        folder will be used as default.
 
         """
         if not path:
             path = self.default_path
 
-        # if len(self.inverted_index) == 0:
-        #     if self.persister.load_inverted_index():
-        #         self.inverted_index = self.persister.load_inverted_index()
-
         self.add_documents(self.load_documents(path))
 
         self.persister.csv_inverted_index_writer(self.inverted_index)
         self.persister.csv_forward_index_writer(self.forward_index)
-        # self.persister.write_binary_index()
 
     def normalize(self, token):
+        """
+        Apply normalization techniques over the token to simplify its structure.
+        :param token:
+        :return:
+        """
         if not self.stemmer:
             self.stemmer = SnowballStemmer(self.language)
         return self.stemmer.stem(token)
 
-    def calc_freq_dist(self, document):
-        return FreqDist(document.read())
-
     def add_documents(self, documents):
+        """
+        Add a new set of documents do the inverted index.
+        :param documents: Dict withe a set of documents to be indexed.
+        """
         freq_dist = FreqDist()
         for k, v in documents.items():
             content = v.read()
-            freq_dist.update(self.tokenizer.tokenize(content))
-            for token in [term.lower() for term in self.tokenizer.tokenize(content)]:
-                if token in self.stopwords:
-                    continue
+            v.close()
+            tknzd_content = self.tokenizer.tokenize(content)
+            freq_dist.update(tknzd_content)
+            for token in [term.lower() for term in tknzd_content if term not in self.stopwords]:
 
                 stem = self.normalize(token)
 
-                if 0 == len(self.inverted_index) or not self.inverted_index[stem]:
+                if len(self.inverted_index) == 0 or not self.inverted_index[stem]:
                     self.inverted_index[stem].append(FrequencyInFile(freq_dist.get(token), k))
                 else:
                     for item in self.inverted_index[stem]:
-                        if k == item.file_id:
-                            continue
-                        self.inverted_index[stem].append(FrequencyInFile(freq_dist.get(token), k))
+                        if k != item.file_id:
+                            self.inverted_index[stem] \
+                                .append(FrequencyInFile(freq_dist.get(token), k))
 
     def reset(self):
+        """
+        Clear the two index.
+        """
         self.forward_index = collections.defaultdict(set)
         self.inverted_index = collections.defaultdict(list)
+
+
+class FrequencyInFile(object):
+    """
+    Class that represents the value of a element in the inverted index.
+    """
+
+    def __init__(self, freq=1, file_id=None):
+        self.freq = freq
+        self.file_id = file_id
+
+    def __repr__(self):
+        return " " + str(self.freq) + ", " + str(self.file_id) + " "
