@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
-#
-# Copyright (C) 2016-2016 
-# Author: Helton Costa <helton.doria@gmail.com>
-# URL: <>
+# Author: Helton Dória Costa <helton.doria@gmail.com>
+# Copyright (C) 2016-2016
+# URL: <http://github.com/heltondoria/information_retrival>
 # For license information, see LICENSE.TXT
+"""
+Module that contains search engines that will look for information held by the index
+"""
 from nltk import SnowballStemmer
 
 from IndexEngine import IndexEngine
@@ -14,7 +16,7 @@ class SearchEngine:
     An search engine that search for words in a set of documents based on a given index.
     """
 
-    def __init__(self, stemmer=None, index_engine=IndexEngine()):
+    def __init__(self, stemmer=None, index_engine=IndexEngine(), language='english'):
         """
         Creates a new instance of the SearchEngine.
         :param stemmer: A stemmer to be used to normalize the searched terms. If either a stemmer is
@@ -22,7 +24,7 @@ class SearchEngine:
         :param index_engine: the index engine to be used to search for the words.
         """
         self.index_engine = index_engine
-        self.language = index_engine.language
+        self.language = language
         self.stemmer = stemmer
 
     def search_single_word(self, token):
@@ -36,9 +38,6 @@ class SearchEngine:
         token = token.lower()
 
         if not self.stemmer:
-            self.stemmer = self.index_engine.stemmer
-
-        if not self.stemmer:
             self.stemmer = SnowballStemmer(self.language)
 
         stem = self.stemmer.stem(token)
@@ -50,3 +49,11 @@ class SearchEngine:
                     documents.add(self.index_engine.forward_index.get(item.file_id))
 
         return documents
+
+    def search_sentence(self, sentence=None):
+        """
+        Search by the words in the sentence and bring a result ordered by relevance
+        :param sentence: string of words to be searched for
+        :return: A list of references ordered by relevance
+        """
+        pass

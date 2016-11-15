@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-#
-# Copyright (C) 2016-2016 
-# Author: Helton Costa <helton.doria@gmail.com>
+# Author: Helton Dória Costa <helton.doria@gmail.com>
+# Copyright (C) 2016-2016
 # URL: <http://github.com/heltondoria/information_retrival>
 # For license information, see LICENSE.TXT
 """
@@ -15,8 +14,8 @@ import pickle
 
 def mkdir(path):
     """
-    Função estática responsável por criar pastas de maneira segura.
-    :param path: Caminho a ser criado.
+    Static function responsible for create directories in a safe way.
+    :param path: Path to be created.
     """
     try:
         os.makedirs(path)
@@ -67,8 +66,8 @@ class IndexPersister(object):
         If exists, load the binary version of the chosen index to continue from the last load.
         """
         try:
-            with safe_open(self.path + file_name + '.pkl', 'rb') as f:
-                return pickle.load(f)
+            with safe_open(self.path + file_name + '.pkl', 'rb') as file:
+                return pickle.load(file)
         except OSError as exc:
             if exc.errno == errno.EEXIST:
                 pass
