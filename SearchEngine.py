@@ -46,7 +46,7 @@ class SearchEngine:
         for token in self.index_engine.inverted_index.keys():
             if stem == token:
                 for item in self.index_engine.inverted_index[token]:
-                    documents.add(self.index_engine.forward_index.get(item.file_id))
+                    documents.add(self.index_engine.forward_index.get(item[1]))
 
         return documents
 

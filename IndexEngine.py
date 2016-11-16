@@ -15,7 +15,8 @@ import collections
 
 from nltk.probability import FreqDist
 
-from Dal import CSVFileDal, FrequencyInFile
+from Dal import CSVFileDal
+from Normalizer import Normalizer, SnowballStemmerNormalizer
 
 
 class IndexEngine(object):
@@ -42,8 +43,9 @@ class IndexEngine(object):
         self.forward_index = collections.defaultdict(set)
         self.normalizer = normalizer
         self.classifier = classifier
-        if not dal:
-            self.dal = CSVFileDal('./index')
+        self.dal = dal
+        if not self.dal:
+            self.dal = CSVFileDal('./index/')
 
     def initialize(self):
         """
@@ -59,8 +61,9 @@ class IndexEngine(object):
         param: terms: list of terms to be normalized
         return: a stem representing a normalized version of a term
         """
-        if self.normalizer:
-            return self.normalizer.normalize(term)
+        if not self.normalizer or not isinstance(self.normalizer, Normalizer):
+            self.normalizer = SnowballStemmerNormalizer()
+        return self.normalizer.normalize(term)
 
     def add_documents(self, document_entries):
         """
@@ -68,13 +71,40 @@ class IndexEngine(object):
         :param document_entries: a set of objects from the class DocumentEntry
         """
         if document_entries:
-            forward = {(document.key, document.name) for document in document_entries}
-            inverted = {(self.__normalize(token),
-                         FrequencyInFile(countInFile.get(token), document.key))
-                        for document in document_entries
-                        for countInFile in [FreqDist.update(document)
-                                            for document in document_entries.tokens]
-                        for token in document.tokens
-                        if self.__normalize(token) not in self.inverted_index.keys()}
+            forward = {(key, document_entries[key][0]) for key in document_entries.keys()}
+            for key in document_entries.keys():
+                freq_dist = FreqDist(document_entries[key][1])
+                for token in document_entries[key][1]:
+                    if len(self.inverted_index) is 0 \
+                            or self.__normalize(token) not in self.inverted_index.keys():
+                        self.inverted_index[self.__normalize(token)]\
+                            .append((freq_dist.get(token), key))
+                    else:
+                        if not freq_dist.get(token) is None:
+                            self.inverted_index[self.__normalize(token)]\
+                                .append((freq_dist.get(token), key))
+
             self.forward_index.update(forward)
-            self.inverted_index.update(inverted)
+            self.dal.save(self.forward_index, 'forward_index.csv',
+                          [key for key in self.forward_index.keys()])
+            self.dal.save(self.inverted_index, 'inverted_index.csv',
+                          [key for key in self.inverted_index.keys()])
+
+    def lookup_key(self, key):
+        """
+        Search for a specific key in the inverted index.
+        :param key: key to be look up for
+        :return: A token representing the key, if it is in the index.
+        """
+        for token in self.inverted_index.keys():
+            if key == token:
+                yield token
+
+    def reset(self):
+        """
+        Reset the indexes to an empty state
+        """
+        self.inverted_index.clear()
+        self.forward_index.clear()
+        self.dal.delete_all("./index/forward_index")
+        self.dal.delete_all("./index/inverted_index")

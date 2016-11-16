@@ -7,8 +7,10 @@
 """
 Module responsible for the demonstration of the index/search engines at work
 """
-
+from Crawler import SimpleTxtCrawler
+from Dal import CSVFileDal
 from IndexEngine import IndexEngine
+from Normalizer import SnowballStemmerNormalizer
 from SearchEngine import SearchEngine
 
 
@@ -30,14 +32,15 @@ class Demo:
         print("                                DEMO 1                                     ")
         print("\n#######################################################################\n")
 
-        # Demonstrate the indexer capability
-        self.indexer.create_index()
+        self.indexer.reset()
+        crawler = SimpleTxtCrawler()
+        self.indexer.add_documents(crawler.parse(crawler.load('./resources/')))
         print("{" + "\n".join("{}: {}".format(k, v)
-                              for k, v in self.indexer.inverted_index.items()) + "}")
+                              for k, v in sorted(self.indexer.inverted_index.items())) + "}")
 
         search_word = "blue"
         print("\nSearch word: '" + search_word + "', search result: \n" + "\n".join(
-            "{} ".format(w) for w in self.searcher.search_single_word(search_word)))
+            "{} ".format(w) for w in sorted(self.searcher.search_single_word(search_word))))
 
     def demo2(self):
         """
@@ -49,9 +52,14 @@ class Demo:
         print("                                DEMO 2                                     ")
         print("\n#######################################################################\n")
 
-        self.indexer.create_index('./extra_files/')
+        self.indexer.reset()
+        crawler = SimpleTxtCrawler()
+        self.indexer.add_documents(crawler.parse(crawler.load('./resources/')))
+        self.indexer.add_documents(crawler.parse(crawler.load('./extra_files/')))
         print("\n{" + "\n".join("{}: {}".format(k, v)
-                                for k, v in self.indexer.forward_index.items()) + "}")
+                                for k, v in sorted(self.indexer.inverted_index.items())) + "}")
+        print("\n{" + "\n".join("{}: {}".format(k, v)
+                                for k, v in sorted(self.indexer.forward_index.items())) + "}")
 
         search_word = "exquisite"
         print("\nSearch word: '" + search_word + "', search result: \n" + "\n".join(
@@ -59,7 +67,7 @@ class Demo:
 
     def demo3(self):
         """
-        Third demonstration: Restar the index, load the initial files again and
+        Third demonstration: Reset the indexes, load the initial files again and
         demonstrate that when searching for the word blue, the result should point
         to the same 2 documents saw in demo1.
         """
@@ -68,11 +76,12 @@ class Demo:
         print("\n#######################################################################\n")
 
         self.indexer.reset()
-        self.indexer.create_index()
+        crawler = SimpleTxtCrawler()
+        self.indexer.add_documents(crawler.parse(crawler.load('./resources/')))
         print("\n{" + "\n".join("{}: {}".format(k, v)
-                                for k, v in self.indexer.forward_index.items()) + "}")
+                                for k, v in sorted(self.indexer.forward_index.items())) + "}")
         print("\n\n{" + "\n".join("{}: {}".format(k, v)
-                                  for k, v in self.indexer.inverted_index.items()) + "}")
+                                  for k, v in sorted(self.indexer.inverted_index.items())) + "}")
 
         search_word = "blue"
         print("\nSearch word: '" + search_word + "', search result: \n" + "\n".join(
@@ -83,7 +92,7 @@ def main():
     """
     Main class responsible to execute everything
     """
-    indexer = IndexEngine()
+    indexer = IndexEngine(normalizer=SnowballStemmerNormalizer(), dal=CSVFileDal(path='./index'))
     searcher = SearchEngine(index_engine=indexer)
     demo = Demo(indexer, searcher)
     demo.demo1()
