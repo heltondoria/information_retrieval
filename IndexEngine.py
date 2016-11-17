@@ -13,6 +13,7 @@ Module may contain different index engines
 
 import collections
 
+from math import log, log10
 from nltk.probability import FreqDist
 
 from Dal import CSVFileDal
@@ -39,7 +40,7 @@ class IndexEngine(object):
         persist the indexes. It can be either a connection to a database or a simple file writer.
 
         """
-        self.inverted_index = collections.defaultdict(list)
+        self.inverted_index = collections.defaultdict(set)
         self.forward_index = collections.defaultdict(set)
         self.normalizer = normalizer
         self.classifier = classifier
@@ -77,28 +78,40 @@ class IndexEngine(object):
                 for token in document_entries[key][1]:
                     if len(self.inverted_index) is 0 \
                             or self.__normalize(token) not in self.inverted_index.keys():
-                        self.inverted_index[self.__normalize(token)]\
-                            .append((freq_dist.get(token), key))
+                        self.inverted_index[self.__normalize(token)] \
+                            .add((freq_dist.get(token), key, freq_dist.freq(token)))
                     else:
                         if not freq_dist.get(token) is None:
-                            self.inverted_index[self.__normalize(token)]\
-                                .append((freq_dist.get(token), key))
+                            self.inverted_index[self.__normalize(token)] \
+                                .add((freq_dist.get(token), key, freq_dist.freq(token)))
 
             self.forward_index.update(forward)
-            self.dal.save(self.forward_index, 'forward_index.csv',
-                          [key for key in self.forward_index.keys()])
-            self.dal.save(self.inverted_index, 'inverted_index.csv',
-                          [key for key in self.inverted_index.keys()])
+            self.tf_idf()
+            self.dal.save(self.forward_index, 'forward_index.csv')
+            self.dal.save(self.inverted_index, 'inverted_index.csv')
 
-    def lookup_key(self, key):
+    def idf(self, token):
         """
-        Search for a specific key in the inverted index.
-        :param key: key to be look up for
-        :return: A token representing the key, if it is in the index.
+        Calc the inverse document frequency represented by the formula
+        idf = log_e(total_num_of_docs/num_docs_with_token)
+        :return:
+        """
+        return log10(len(self.forward_index) / len(self.inverted_index[token]))
+
+    def tf_idf(self):
+        """
+        Calc the TF-IDF for all tokens in the inverted_index using the formula
+        TF-IDF = TF*IDF
         """
         for token in self.inverted_index.keys():
-            if key == token:
-                yield token
+            idf = self.idf(token)
+            occurrences = set()
+            for entry in self.inverted_index[token]:
+                qty_in_doc = entry[0]
+                doc_key = entry[1]
+                tf = entry[2]
+                occurrences.add((qty_in_doc, doc_key, tf, tf * idf))
+            self.inverted_index[token] = occurrences
 
     def reset(self):
         """
@@ -108,3 +121,4 @@ class IndexEngine(object):
         self.forward_index.clear()
         self.dal.delete_all("./index/forward_index")
         self.dal.delete_all("./index/inverted_index")
+
