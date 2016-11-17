@@ -27,10 +27,9 @@ class Dao(ABC):
         pass
 
     @abstractmethod
-    def save(self, indexdata, indexname=None, fields=None):
+    def save(self, indexdata, indexname=None):
         """
         Save data in the storage object
-        :param fields: Name of the columns in the persistence unit
         :param indexname: name of the index to be saved
         :param indexdata: data to be persisted
         """
@@ -74,17 +73,17 @@ class CSVFileDal(Dao):
 
             return index
 
-    def save(self, indexdata, indexname=None, fields=None):
+    def save(self, indexdata, indexname=None):
         """
         Save data in the storage object
-        :param fields: Name of the columns in the csv file
         :param indexname: name of the csv file were the index will be saved
-        :param indexdata: data to be persisted
+        :param indexdata: data to be persisted (in dict format)
         """
-        with self.safe_open(filename=indexname, mode='a+') as file:
+        with self.safe_open(filename=indexname, mode='w') as file:
             csv.register_dialect("unix_dialect")
-            csv_obj = csv.DictWriter(file, fields)
-            csv_obj.writerow(indexdata)
+            writer = csv.writer(file)
+            for key, value in indexdata.items():
+                writer.writerow([key, value])
             file.close()
 
     def delete_all(self, indexname):
