@@ -13,11 +13,11 @@ Projeto de indexação e busca construído como parte do trabalho semestral do B
 ## Fase 2 - Criar um indexador utilizando pesos (tf-idf):
 [Métodos de Busca - Aula 3.pdf](https://github.com/raulsenaferreira/Talks-and-Presentations/blob/master/Infnet/information_retrieval/M%C3%A9todos%20de%20busca%20-%20Aula%203.pdf)
 
-- [ ] Ler arqivo que contém a lista invertida (produzido na fase 1)
-- [ ] Criar um método de cálculo do tf-idf e atribuir o pesos aos termos da lista invertida lida do arquivo 
+- [x] Ler arqivo que contém a lista invertida (produzido na fase 1)
+- [x] Criar um método de cálculo do tf-idf e atribuir o pesos aos termos da lista invertida lida do arquivo 
     - Consultar aula anterior para ver como é o cálculo do TF-IDF e como esse valor é atribuído na lista invertida
-- [ ] Salvar o resultado final em arquivo
-- [ ] O resultado pode ser salvo da mesma forma como foi salvo no exercício anterior, por exemplo:
+- [x] Salvar o resultado final em arquivo
+- [x] O resultado pode ser salvo da mesma forma como foi salvo no exercício anterior, por exemplo:
     - termo;[doc1: 2.98, doc2: 1.74]
 
 
@@ -33,13 +33,13 @@ Projeto de indexação e busca construído como parte do trabalho semestral do B
     > fornecer um lemmatizador. Porém modificado posteriormente com a
     > eliminação da possibilidade de fornecer um lemmatizador.
 * [ ] Acrescentar busca por similaridade (prioridade)
-* [ ] Criar um hash como identificador único dos arquivos para que o índice seja o mesmo, independente da ordem de carregamento dos documentos
+* [x] Criar um hash como identificador único dos arquivos para que o índice seja o mesmo, independente da ordem de carregamento dos documentos
 * [ ] Criar métodos (ou uma nova classe) para extrair métricas do índice (desejável)
-* [ ] Criar um método de carga de documentos que aceite um crawler como parâmetro, que será responsável por navegar em uma estrura de pastas
+* [x] Criar um método de carga de documentos que aceite um crawler como parâmetro, que será responsável por navegar em uma estrura de pastas
    carregando arquivos (desejável)
 * [ ] Ampliar o suporte a crawlers, adicionando um crawler web (desejável)
-* [ ] Separar o tratamento de limpeza dos documentos, permitindo que outros tipos de arquivos, como páginas HTML, também possam ser
+* [x] Separar o tratamento de limpeza dos documentos, permitindo que outros tipos de arquivos, como páginas HTML, também possam ser
   indexados (desejável)
-* [ ] Aperfeiçoar meu código Python usando o pylint como orientador (em andamento).
-* [ ] Remodelar o código de acordo com o método S.O.L.I.D. (Robert C. Martin)
-
+* [x] Aperfeiçoar meu código Python usando o pylint como orientador.
+* [ ] Remodelar o código de acordo com o método S.O.L.I.D. (Robert C. Martin) (Em andamento)
+* [x] Adicionar rankeamento de resultados de consultas
