@@ -4,7 +4,7 @@
 # URL: <http://github.com/heltondoria/information_retrival>
 # For license information, see LICENSE.TXT
 """
-Modulo that contains classes responsible for the normalization of the tokens found inside of
+Module that contains classes responsible for the normalization of the tokens found inside of a
 document
 """
 from abc import ABCMeta, abstractmethod

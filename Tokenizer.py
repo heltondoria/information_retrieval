@@ -4,7 +4,7 @@
 # URL: <http://github.com/heltondoria/information_retrival>
 # For license information, see LICENSE.TXT
 """
-Modulo that contains classes responsible for tokenize strings
+Module that contains classes responsible for tokenize strings
 """
 from abc import ABCMeta, abstractmethod
 

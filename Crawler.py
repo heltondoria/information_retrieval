@@ -4,7 +4,7 @@
 # URL: <http://github.com/heltondoria/information_retrival>
 # For license information, see LICENSE.TXT
 """
-Modulo that contains classes responsible to obtain and parse documents to be indexed
+Module that contains classes responsible to obtain and parse documents to be indexed
 """
 import collections
 import os
