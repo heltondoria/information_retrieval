@@ -6,6 +6,9 @@
 """
 Module that contains search engines that will look for information held by the index
 """
+import collections
+import operator
+
 from nltk import SnowballStemmer
 
 from IndexEngine import IndexEngine
@@ -42,13 +45,13 @@ class SearchEngine:
 
         stem = self.stemmer.stem(token)
 
-        documents = set()
+        documents = collections.defaultdict(set)
         for token in self.index_engine.inverted_index.keys():
             if stem == token:
-                for item in self.index_engine.inverted_index[token]:
-                    documents.add(self.index_engine.forward_index.get(item[1]))
+                for entry in self.index_engine.inverted_index[token]:
+                    documents[entry[3]] = (self.index_engine.forward_index.get(entry[1]))
 
-        return documents
+        return self.ranking(documents)
 
     def search_sentence(self, sentence=None):
         """
@@ -57,3 +60,21 @@ class SearchEngine:
         :return: A list of references ordered by relevance
         """
         pass
+
+    def score(self, query_terms):
+        """
+        Calculate the score of a document d as the sum of the tf-idf weight of each term
+        in d that appears in query_terms.
+
+        :param query_terms: list of term being searched
+        :return: return a number representing the score of a document
+        """
+        pass
+
+    def ranking(self, query_result):
+        """
+        Sort the query result vector based on the score of each document in the query_result.
+        :param query_result: list of documents that is a result of a query
+        :return: The query_result vector ordered by the score of each document
+        """
+        return sorted(query_result.items(), key=operator.itemgetter(0))
