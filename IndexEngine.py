@@ -13,7 +13,7 @@ Module may contain different index engines
 
 import collections
 
-from math import log, log10
+from math import log10
 from nltk.probability import FreqDist
 
 from Dal import CSVFileDal
