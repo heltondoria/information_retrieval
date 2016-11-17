@@ -87,6 +87,28 @@ class Demo:
         print("\nSearch word: '" + search_word + "', search result: \n" + "\n".join(
             "{} ".format(w) for w in self.searcher.search_single_word(search_word)))
 
+    def demo4(self):
+        """
+        Forth demonstration: add more documents to the index and the search for the word
+        "ye". This should point to 3 documents ranked based its weight in the query.
+        """
+        print("\n#######################################################################\n")
+        print("                                DEMO 4                                     ")
+        print("\n#######################################################################\n")
+
+        self.indexer.reset()
+        crawler = SimpleTxtCrawler()
+        self.indexer.add_documents(crawler.parse(crawler.load('./resources/')))
+        self.indexer.add_documents(crawler.parse(crawler.load('./extra_files/')))
+        print("\n{" + "\n".join("{}: {}".format(k, v)
+                                for k, v in sorted(self.indexer.inverted_index.items())) + "}")
+        print("\n{" + "\n".join("{}: {}".format(k, v)
+                                for k, v in sorted(self.indexer.forward_index.items())) + "}")
+
+        search_word = "ye"
+        print("\nSearch word: '" + search_word + "', search result: \n" + "\n".join(
+            "{} ".format(w) for w in self.searcher.search_single_word(search_word)))
+
 
 def main():
     """
@@ -98,6 +120,7 @@ def main():
     demo.demo1()
     demo.demo2()
     demo.demo3()
+    demo.demo4()
 
 
 if __name__ == '__main__':
