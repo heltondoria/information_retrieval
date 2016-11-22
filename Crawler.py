@@ -28,6 +28,7 @@ class Crawler(metaclass=ABCMeta):
     """
     Abstract class responsible to define a common interface for crawlers.
     """
+
     @abstractmethod
     def load(self, path):
         """

@@ -26,7 +26,7 @@ class IndexEngine(object):
     path
     """
 
-    def __init__(self, normalizer=None, classifier=None, dal=None):
+    def __init__(self, normalizer=None, dal=None):
         """
         Creates a new instance of the IndexEngine. The IndexEngine is responsible for maintain,
         classify an order the indexes.
@@ -43,7 +43,6 @@ class IndexEngine(object):
         self.inverted_index = collections.defaultdict(set)
         self.forward_index = collections.defaultdict(set)
         self.normalizer = normalizer
-        self.classifier = classifier
         self.dal = dal
         if not self.dal:
             self.dal = CSVFileDal('./index/')
@@ -109,9 +108,16 @@ class IndexEngine(object):
             for entry in self.inverted_index[token]:
                 qty_in_doc = entry[0]
                 doc_key = entry[1]
-                tf = entry[2]
-                occurrences.add((qty_in_doc, doc_key, tf, tf * idf))
+                ntf = entry[2]
+                occurrences.add((qty_in_doc, doc_key, ntf, ntf * idf))
             self.inverted_index[token] = occurrences
+
+    def get_doc(self, key):
+        """
+        Return a document based in it's key in the forward index.
+        :return: The path to the document on the file system
+        """
+        return self.forward_index[key]
 
     def reset(self):
         """
@@ -121,4 +127,3 @@ class IndexEngine(object):
         self.forward_index.clear()
         self.dal.delete_all("./index/forward_index")
         self.dal.delete_all("./index/inverted_index")
-

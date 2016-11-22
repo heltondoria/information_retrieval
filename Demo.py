@@ -35,12 +35,10 @@ class Demo:
         self.indexer.reset()
         crawler = SimpleTxtCrawler()
         self.indexer.add_documents(crawler.parse(crawler.load('./resources/')))
-        print("{" + "\n".join("{}: {}".format(k, v)
-                              for k, v in sorted(self.indexer.inverted_index.items())) + "}")
 
         search_word = "blue"
         print("\nSearch word: '" + search_word + "', search result: \n" + "\n".join(
-            "{} ".format(w) for w in sorted(self.searcher.search_single_word(search_word))))
+            "{} ".format(w) for w in sorted(self.searcher.search(search_word))))
 
     def demo2(self):
         """
@@ -56,14 +54,10 @@ class Demo:
         crawler = SimpleTxtCrawler()
         self.indexer.add_documents(crawler.parse(crawler.load('./resources/')))
         self.indexer.add_documents(crawler.parse(crawler.load('./extra_files/')))
-        print("\n{" + "\n".join("{}: {}".format(k, v)
-                                for k, v in sorted(self.indexer.inverted_index.items())) + "}")
-        print("\n{" + "\n".join("{}: {}".format(k, v)
-                                for k, v in sorted(self.indexer.forward_index.items())) + "}")
 
         search_word = "exquisite"
         print("\nSearch word: '" + search_word + "', search result: \n" + "\n".join(
-            "{} ".format(w) for w in self.searcher.search_single_word(search_word)))
+            "{} ".format(w) for w in self.searcher.search(search_word)))
 
     def demo3(self):
         """
@@ -78,14 +72,10 @@ class Demo:
         self.indexer.reset()
         crawler = SimpleTxtCrawler()
         self.indexer.add_documents(crawler.parse(crawler.load('./resources/')))
-        print("\n{" + "\n".join("{}: {}".format(k, v)
-                                for k, v in sorted(self.indexer.forward_index.items())) + "}")
-        print("\n\n{" + "\n".join("{}: {}".format(k, v)
-                                  for k, v in sorted(self.indexer.inverted_index.items())) + "}")
 
         search_word = "blue"
         print("\nSearch word: '" + search_word + "', search result: \n" + "\n".join(
-            "{} ".format(w) for w in self.searcher.search_single_word(search_word)))
+            "{} ".format(w) for w in self.searcher.search(search_word)))
 
     def demo4(self):
         """
@@ -100,14 +90,27 @@ class Demo:
         crawler = SimpleTxtCrawler()
         self.indexer.add_documents(crawler.parse(crawler.load('./resources/')))
         self.indexer.add_documents(crawler.parse(crawler.load('./extra_files/')))
-        print("\n{" + "\n".join("{}: {}".format(k, v)
-                                for k, v in sorted(self.indexer.inverted_index.items())) + "}")
-        print("\n{" + "\n".join("{}: {}".format(k, v)
-                                for k, v in sorted(self.indexer.forward_index.items())) + "}")
 
         search_word = "ye"
         print("\nSearch word: '" + search_word + "', search result: \n" + "\n".join(
-            "{} ".format(w) for w in self.searcher.search_single_word(search_word)))
+            "{} ".format(w) for w in self.searcher.search(search_word)))
+
+    def demo5(self):
+        """
+        fifth demonstration: search by a phrase
+        """
+        print("\n#######################################################################\n")
+        print("                                DEMO 5                                     ")
+        print("\n#######################################################################\n")
+
+        self.indexer.reset()
+        crawler = SimpleTxtCrawler()
+        self.indexer.add_documents(crawler.parse(crawler.load('./resources/')))
+        self.indexer.add_documents(crawler.parse(crawler.load('./extra_files/')))
+
+        search_phrase = "The beautiful blue butterfly"
+        print("\nSearch word: '" + search_phrase + "', search result: \n" + "\n".join(
+            "{} ".format(w) for w in self.searcher.search(search_phrase)))
 
 
 def main():
@@ -121,6 +124,7 @@ def main():
     demo.demo2()
     demo.demo3()
     demo.demo4()
+    demo.demo5()
 
 
 if __name__ == '__main__':

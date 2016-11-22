@@ -16,6 +16,7 @@ class Normalizer(metaclass=ABCMeta):
     """
     Abstract class to define a interface for normalizers.
     """
+
     @abstractmethod
     def normalize(self, token):
         """
@@ -62,27 +63,3 @@ class SnowballStemmerNormalizer(Normalizer):
         """
         for token in tokens:
             yield self.stemmer.stem(token)
-
-#
-# def add_documents(self, documents):
-#     """
-#     Add a new set of documents do the inverted index.
-#     :param documents: Dict withe a set of documents to be indexed.
-#     """
-#     freq_dist = FreqDist()
-#     for k, v in documents.items():
-#         content = v.read()
-#         v.close()
-#         tknzd_content = self.tokenizer.tokenize(content)
-#         freq_dist.update(tknzd_content)
-#         for token in [term.lower() for term in tknzd_content if term not in self.stopwords]:
-#
-#             stem = self.normalize(token)
-#
-#             if len(self.inverted_index) == 0 or not self.inverted_index[stem]:
-#                 self.inverted_index[stem].append(FrequencyInFile(freq_dist.get(token), k))
-#             else:
-#                 for item in self.inverted_index[stem]:
-#                     if k != item.file_id:
-#                         self.inverted_index[stem] \
-#                             .append(FrequencyInFile(freq_dist.get(token), k))
