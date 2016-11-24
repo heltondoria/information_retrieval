@@ -118,7 +118,7 @@ def main():
     Main class responsible to execute everything
     """
     indexer = IndexEngine(normalizer=SnowballStemmerNormalizer(), dal=CSVFileDal(path='./index'))
-    searcher = SearchEngine(index_engine=indexer)
+    searcher = SearchEngine()
     demo = Demo(indexer, searcher)
     demo.demo1()
     demo.demo2()

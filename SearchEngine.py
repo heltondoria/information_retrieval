@@ -6,8 +6,10 @@
 """
 Module that contains search engines that will look for information held by the index
 """
+import collections
 import operator
 
+from Dal import CSVFileDal
 from IndexEngine import IndexEngine
 from Normalizer import SnowballStemmerNormalizer
 from Tokenizer import EnglishRegexpTokenizer
@@ -27,17 +29,19 @@ class SearchEngine:
     An search engine that search for words in a set of documents based on a given index.
     """
 
-    def __init__(self, stemmer=None, index_engine=IndexEngine(), language='english'):
+    def __init__(self, stemmer=None, language='english'):
         """
         Creates a new instance of the SearchEngine.
         :param stemmer: A stemmer to be used to normalize the searched terms. If either a stemmer is
         not provided, uses NLTK SnowballStemmer as default.
-        :param index_engine: the index engine to be used to search for the words.
+        :param language: Language to use during normalization fase
         """
-        self.index = index_engine
         self.language = language
         self.normalizer = stemmer
         self.tokenizer = EnglishRegexpTokenizer()
+        self.dal = CSVFileDal('./index/')
+        self.inverted_index = collections.defaultdict(set)
+        self.forward_index = collections.defaultdict(set)
         if not self.normalizer:
             self.normalizer = SnowballStemmerNormalizer()
 
@@ -48,18 +52,27 @@ class SearchEngine:
         :param sentence: string of words to be searched for
         :return: A list of references ordered by relevance
         """
+        self.load_index()
         if sentence:
             result = dict()
             tokens = self.tokenizer.tokenize(sentence)
             for stem in self.normalizer.normalize_list(tokens):
-                if stem in self.index.inverted_index.keys():
-                    for doc in self.index.inverted_index[stem]:
-                        doc_name = self.index.get_doc(doc[1])
-                        if doc_name in result.keys():
-                            result[doc_name] = result[doc_name] + doc[3]
-                        else:
-                            result[doc_name] = doc[3]
+                if stem in self.inverted_index.keys():
+                    for doc in self.inverted_index[stem]:
+                        doc_set = self.forward_index[doc[1]]
+                        for doc_name in doc_set:
+                            if doc_name in result.keys():
+                                result[doc_name] = result[doc_name] + doc[3]
+                            else:
+                                result[doc_name] = doc[3]
             if len(result) > 0:
                 return ranking(result)
         else:
             print("Nothing to do")
+
+    def load_index(self):
+        """
+        Load index from csv files
+        """
+        self.inverted_index = self.dal.load("inverted_index.csv")
+        self.forward_index = self.dal.load("forward_index.csv")

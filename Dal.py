@@ -11,6 +11,8 @@ import errno
 import os
 from abc import ABC, abstractmethod
 
+import collections
+
 
 class Dao(ABC):
     """
@@ -60,16 +62,10 @@ class CSVFileDal(Dao):
         """
         with self.safe_open(indexname, mode='r') as file:
             csv.register_dialect("unix_dialect")
-            reader = csv.DictReader(file)
-            index = dict()
-            if indexname == "forward_index.csv":
-                for line in reader:
-                    index[line[0]] = set()
-                    index[line[0]].add(line[1])
-            elif indexname == "inverted_index.csv":
-                for line in reader:
-                    index[line[0]] = list()
-                    index[line[0]].append((line[1], line[2]))
+            reader = csv.reader(file, delimiter=',')
+            index = collections.defaultdict(set)
+            for line in reader:
+                index[line[0]] = eval(line[1])
 
             return index
 

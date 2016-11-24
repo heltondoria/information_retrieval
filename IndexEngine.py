@@ -71,7 +71,7 @@ class IndexEngine(object):
         :param document_entries: a set of objects from the class DocumentEntry
         """
         if document_entries:
-            forward = {(key, document_entries[key][0]) for key in document_entries.keys()}
+            forward = {key: {(document_entries[key][0])} for key in document_entries.keys()}
             for key in document_entries.keys():
                 freq_dist = FreqDist(document_entries[key][1])
                 for token in document_entries[key][1]:
