@@ -31,7 +31,7 @@ class IndexEngine(object):
 
     def __init__(self, normalizer=None, data_path=None, crawler=None):
         """
-        Creates a new instance of the IndexEngine. The IndexEngine is responsible for maintain,
+        Creates a new instance of IndexEngine. The IndexEngine is responsible for maintain,
         classify an order the indexes.
 
         :param normalizer: an object from a class that inherits from Normalizer. It will be used
@@ -118,7 +118,7 @@ class IndexEngine(object):
                 ntf = entry[2]
                 occurrences.add((qty_in_doc, doc_key, ntf, ntf * idf))
             self.inverted_index[token] = occurrences
-        self.logger.info("Total time of weighting calculus: {:.3f}s".format(time.time() - start_time))
+        self.logger.info("Total time of weighting calculus: {:.6f}s".format(time.time() - start_time))
 
     def get_doc(self, key):
         """

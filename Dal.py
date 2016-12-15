@@ -55,15 +55,19 @@ class CSVFileDal(Dao):
         log_file = "./log/" + self.__class__.__name__ + ".log"
         self.logger = get_logger(self.__class__.__name__, log_file)
 
-    def read(self, indexname=None):
+    def read(self, indexname=None, delimiter=None):
         """
         Load data from a simple csv file
         :param indexname: name of the csv file to be loaded
+        :param delimiter: delimiter used to separate data in the file (Optional)
         :return: dict with data loaded from the file
         """
+        if delimiter is None:
+            delimiter = ','
+
         with safe_open(filepath=indexname, mode='r') as file:
             csv.register_dialect("unix_dialect")
-            reader = csv.reader(file, delimiter=',')
+            reader = csv.reader(file, delimiter=delimiter)
             index = collections.defaultdict(set)
             for line in reader:
                 index[line[0]] = eval(line[1])

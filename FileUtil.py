@@ -28,19 +28,20 @@ def safe_mkdir(path):
 
 def safe_open(filepath, mode='+'):
     """
-    Open "path" for writing, creating any parent directories as needed.
+    Open a file for writing, creating any parent directories if needed.
 
-    :param path: path that contains the file the we want to open
-    :param filename: Name of the index to be open
+    :param filepath: full path to the file to be open
     :param mode: mode to access the file, i.e., 'r', 'w', 'x', 'a','b' and so on
     :return: An opened file, if it exists.
     """
     full_path = os.path.abspath(filepath)
     path = full_path.strip(os.path.basename(filepath))
-    if not full_path:
-        raise FileNotFoundError("A filename was expected")
     safe_mkdir(path)
-    return open(full_path, mode)
+    try:
+        file = open(full_path, mode)
+    except FileNotFoundError:
+        file = open(full_path, 'x')
+    return file
 
 
 def get_logger(name, log_file):

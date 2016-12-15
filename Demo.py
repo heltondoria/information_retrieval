@@ -55,6 +55,7 @@ class Demo:
         self.searcher = SearchEngine()
         self.indexer.reset()
         self.indexer.index_documents()
+        self.searcher.batch_search()
 
         # search_phrase = "The beautiful blue butterfly"
         # print("\nSearch word: '" + search_phrase + "', search result: \n" + "\n".join(
@@ -66,7 +67,7 @@ def main():
     Main class responsible to execute everything
     """
     demo = Demo()
-    demo.demo1()
+    # demo.demo1()
     demo.demo2()
 
 
