@@ -6,12 +6,12 @@
 """
 Module that contains classes responsible for data persistence in the index engine.
 """
+import collections
 import csv
-import errno
 import os
 from abc import ABC, abstractmethod
 
-import collections
+from FileUtil import get_logger, safe_open
 
 
 class Dao(ABC):
@@ -20,7 +20,7 @@ class Dao(ABC):
     """
 
     @abstractmethod
-    def load(self, indexname=None):
+    def read(self, indexname=None):
         """
         Load data from the storage object
         :param indexname: name of the index to be load
@@ -29,7 +29,7 @@ class Dao(ABC):
         pass
 
     @abstractmethod
-    def save(self, indexdata, indexname=None):
+    def write(self, indexdata, indexname=None):
         """
         Save data in the storage object
         :param indexname: name of the index to be saved
@@ -51,16 +51,17 @@ class CSVFileDal(Dao):
     A concrete implementation of Dao abstract class that persist data in a simple csv file.
     """
 
-    def __init__(self, path):
-        self.path = path
+    def __init__(self):
+        log_file = "./log/" + self.__class__.__name__ + ".log"
+        self.logger = get_logger(self.__class__.__name__, log_file)
 
-    def load(self, indexname=None):
+    def read(self, indexname=None):
         """
         Load data from a simple csv file
         :param indexname: name of the csv file to be loaded
         :return: dict with data loaded from the file
         """
-        with self.safe_open(indexname, mode='r') as file:
+        with safe_open(filepath=indexname, mode='r') as file:
             csv.register_dialect("unix_dialect")
             reader = csv.reader(file, delimiter=',')
             index = collections.defaultdict(set)
@@ -69,13 +70,13 @@ class CSVFileDal(Dao):
 
             return index
 
-    def save(self, indexdata, indexname=None):
+    def write(self, indexdata, indexname=None):
         """
         Save data in the storage object
         :param indexname: name of the csv file were the index will be saved
         :param indexdata: data to be persisted (in dict format)
         """
-        with self.safe_open(filename=indexname, mode='w') as file:
+        with safe_open(filepath=indexname, mode='w') as file:
             csv.register_dialect("unix_dialect")
             writer = csv.writer(file)
             for key, value in indexdata.items():
@@ -95,29 +96,3 @@ class CSVFileDal(Dao):
                 pass
         except OSError:
             raise
-
-    def safe_mkdir(self):
-        """
-        method responsible for create directories in a safe way.
-        """
-        try:
-            os.makedirs(self.path)
-        except OSError as exc:
-            if exc.errno == errno.EEXIST and os.path.isdir(self.path):
-                pass
-            else:
-                raise
-
-    def safe_open(self, filename=None, mode='+'):
-        """
-        Open "path" for writing, creating any parent directories as needed.
-
-        :param filename: Name of the index to be open
-        :param mode: mode to access the file, i.e., 'r', 'w', 'x', 'a','b' and so on
-        :return: An opened file, if it exists.
-        """
-        fullpath = self.path + "/" + filename
-        if not fullpath:
-            raise FileNotFoundError("A filename was expected")
-        self.safe_mkdir()
-        return open(fullpath, mode)

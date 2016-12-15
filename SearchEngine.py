@@ -10,7 +10,6 @@ import collections
 import operator
 
 from Dal import CSVFileDal
-from IndexEngine import IndexEngine
 from Normalizer import SnowballStemmerNormalizer
 from Tokenizer import EnglishRegexpTokenizer
 
@@ -39,14 +38,13 @@ class SearchEngine:
         self.language = language
         self.normalizer = stemmer
         self.tokenizer = EnglishRegexpTokenizer()
-        self.dal = CSVFileDal('./index/')
+        self.dal = CSVFileDal()
         self.inverted_index = collections.defaultdict(set)
         self.forward_index = collections.defaultdict(set)
         if not self.normalizer:
             self.normalizer = SnowballStemmerNormalizer()
 
     def search(self, sentence=None):
-
         """
         Search by the words in the sentence and bring a result ordered by relevance
         :param sentence: string of words to be searched for
@@ -74,5 +72,5 @@ class SearchEngine:
         """
         Load index from csv files
         """
-        self.inverted_index = self.dal.load("inverted_index.csv")
-        self.forward_index = self.dal.load("forward_index.csv")
+        self.inverted_index = self.dal.read("./index/inverted_index.csv")
+        self.forward_index = self.dal.read("./index/forward_index.csv")

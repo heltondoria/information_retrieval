@@ -8,9 +8,12 @@ Module that contains classes responsible to obtain and parse documents to be ind
 """
 import collections
 import os
+import time
 import uuid
 from abc import ABCMeta, abstractmethod
+from xml.dom.minidom import parse
 
+from FileUtil import get_logger, safe_open
 from Tokenizer import EnglishRegexpTokenizer
 
 
@@ -52,10 +55,12 @@ class Crawler(metaclass=ABCMeta):
 
 class SimpleTxtCrawler(Crawler):
     """
-    A simple web crawler that implements the interface of the abstract class Crawler
+    A simple file crawler that parses TXT files
     """
 
     def __init__(self):
+        log_file = "./log/" + self.__class__.__name__ + ".log"
+        self.logger = get_logger(self.__class__.__name__, log_file)
         self.tokenizer = EnglishRegexpTokenizer()
 
     def load(self, path):
@@ -70,21 +75,77 @@ class SimpleTxtCrawler(Crawler):
         documents = collections.defaultdict(set)
         if len(txt_files) > 0:
             for file_name in sorted(txt_files):
-                file = open(file_name)
+                txt = open(file_name)
                 uid = str(uuid.uuid5(uuid.NAMESPACE_DNS, file_name))
-                documents[uid] = (file_name, file.read())
-                file.close()
+                documents[uid] = (file_name, self.parse(txt.read()))
+                txt.close()
         return documents
 
-    def parse(self, documents):
+    def parse(self, content):
         """
         Read document as dict and tokenize its content
         :param documents: A dict created by the load method
         :return: A new dictionary where the content of the document is overridden with
         a list of its tokens.
         """
-        tokenized_documents = collections.defaultdict(set)
-        for document in documents.items():
-            tokenized_documents[document[0]] = (document[1][0], self.tokenizer
-                                                .tokenize(document[1][1]))
-        return tokenized_documents
+        start_time = time.time()
+        tokenized_content = self.tokenizer.tokenize(content)
+        self.logger.info("%s records read successfully in {:.6f}s".format(time.time() - start_time),
+                         str(len(tokenized_content)))
+        return tokenized_content
+
+
+class SimpleXMLCrawler(Crawler):
+    """
+    A simple file crawler that parses XML files from Cystic Fibrosis Collection
+    """
+
+    def __init__(self):
+        log_file = "./log/" + self.__class__.__name__ + ".log"
+        self.logger = get_logger(self.__class__.__name__, log_file)
+        self.tokenizer = EnglishRegexpTokenizer()
+
+    def load(self, path):
+        """
+        Load a new xml document from the path
+        :param path: Path from which the files should be loaded
+        :return: A dict containing a key and tuple with the full path name of
+          the file and its contents.
+        """
+        xml_files = sorted([file for file in list_files(path) if file.endswith('.xml')])
+        documents = collections.defaultdict(set)
+        if len(xml_files) > 0:
+            for file_name in sorted(xml_files):
+                with safe_open(file_name, mode='r') as file:
+                    documents.update(self.parse(file))
+                    file.close()
+        return documents
+
+    def parse(self, file):
+        """
+        Parse data from a xml file
+        :param file: xml file to be parsed
+        :return: dict with data loaded from the file
+        """
+        dictionary = {}
+        dom_tree = parse(file)
+        collection = dom_tree.documentElement
+
+        records = collection.getElementsByTagName("RECORD")
+
+        start_time = time.time()
+        for record in records:
+            record_number = record.getElementsByTagName('RECORDNUM')[0].childNodes[0].data
+            paper_number = record.getElementsByTagName("PAPERNUM")[0].childNodes[0].data
+            try:
+                dictionary[record_number] = (paper_number, self.tokenizer.tokenize(
+                    record.getElementsByTagName('ABSTRACT')[0].childNodes[0].data))
+            except IndexError:
+                try:
+                    dictionary[record_number] = (paper_number, self.tokenizer.tokenize(
+                        record.getElementsByTagName('EXTRACT')[0].childNodes[0].data))
+                except IndexError:
+                    self.logger.warning("Document[" + record_number + "] doesn't have abstract neither extract!")
+        self.logger.info("%s records read successfully in {:.6f}s".format(time.time() - start_time),
+                         str(len(dictionary)))
+        return dictionary
